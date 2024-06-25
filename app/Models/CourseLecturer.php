@@ -7,36 +7,33 @@
 namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class CourseTask
+ * Class CourseLecturer
  * 
  * @property string $id
+ * @property string $lecturer_id
  * @property string $course_id
- * @property string $title
- * @property string|null $description
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string|null $deleted_at
  * 
  * @property Course $course
- * @property Collection|CourseTaskAssignee[] $course_task_assignees
+ * @property Lecturer $lecturer
  *
  * @package App\Models
  */
-class CourseTask extends Model
+class CourseLecturer extends Model
 {
 	use SoftDeletes;
-	protected $table = 'course_tasks';
+	protected $table = 'course_lecturers';
 	public $incrementing = false;
 
 	protected $fillable = [
-		'course_id',
-		'title',
-		'description'
+		'lecturer_id',
+		'course_id'
 	];
 
 	public function course()
@@ -44,8 +41,8 @@ class CourseTask extends Model
 		return $this->belongsTo(Course::class);
 	}
 
-	public function course_task_assignees()
+	public function lecturer()
 	{
-		return $this->hasMany(CourseTaskAssignee::class);
+		return $this->belongsTo(Lecturer::class);
 	}
 }
