@@ -1,65 +1,82 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
+use App\Contracts\Response;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\LecturerRequest;
+use App\Http\Resources\LecturerResource;
 use App\Models\Lecturer;
-use Illuminate\Http\Request;
 
 class LecturerController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the lecturers.
+     *
+     * @return \App\Contracts\Response
      */
     public function index()
     {
-        //
+        return Response::json(LecturerResource::collection(Lecturer::all()));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created lecturer in storage.
+     *
+     * @param  \App\Http\Requests\LecturerRequest  $request
+     * @return \App\Contracts\Response
      */
-    public function create()
+    public function store(LecturerRequest $request)
     {
-        //
+        $data = $request->validated();
+
+        return Response::okCreated(new LecturerResource(Lecturer::create($data)));
+
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified lecturer.
+     *
+     * @param  \App\Models\Lecturer  $lecturer
+     * @return \App\Contracts\Response
      */
-    public function store(Request $request)
+    public function show($lecturer)
     {
-        //
+        $lecturer = Lecturer::find($lecturer);
+
+        if ($lecturer) {
+            return Response::json(new LecturerResource($lecturer));
+        }
+
+        return Response::abortNotFound();
     }
 
     /**
-     * Display the specified resource.
+     * Update the specified lecturer in storage.
+     *
+     * @param  \App\Http\Requests\LecturerRequest  $request
+     * @param  \App\Models\Lecturer  $lecturer
+     * @return \App\Contracts\Response
      */
-    public function show(Lecturer $lecturer)
+    public function update(LecturerRequest $request, Lecturer $lecturer)
     {
-        //
+        $data = $request->validated();
+
+        $lecturer->update($data);
+        return Response::okUpdated(new LecturerResource($lecturer));
+
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Lecturer $lecturer)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Lecturer $lecturer)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
+     * Remove the specified lecturer from storage.
+     *
+     * @param  \App\Models\Lecturer  $lecturer
+     * @return \App\Contracts\Response
      */
     public function destroy(Lecturer $lecturer)
     {
-        //
+        $lecturer->delete();
+        return Response::noContent();
+
     }
 }

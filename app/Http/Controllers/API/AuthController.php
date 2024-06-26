@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Contracts\Request;
+use App\Contracts\Response;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\LecturerResource;
+use App\Http\Resources\StudentResource;
 use App\Models\Lecturer;
 use App\Models\Student;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,43 +21,37 @@ class AuthController extends Controller
     /**
      * Register a new user.
      *
-     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @param \App\Contracts\Request $request The HTTP request object.
      * @throws \Illuminate\Validation\ValidationException If the validation fails.
-     * @return \Illuminate\Http\JsonResponse The JSON response containing the success message and the registered user.
+     * @return \App\Contracts\Response The JSON response containing the success message and the registered user.
      */
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
         try
         {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8',
-            ]);
+            $data = $request->validated();
 
-            $user = User::create([
+            User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'role' => $request->role,
             ]);
 
             if ($request->role == 1) {
-                Student::create([
-                    'email' => $user->email,
-                    'name' => $user->name,
-                ]);
+                $student = Student::create($data);
+                return Response::okCreated(new StudentResource($student));
+
             }
 
             if ($request->role == 2) {
-                Lecturer::create([
-                    'email' => $user->email,
-                    'name' => $user->name,
-                ]);
+                $lecture = Lecturer::create($data);
+                return Response::okCreated(new LecturerResource($lecture));
+
             }
 
-            return response()->json(['message' => 'User registered successfully'], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return Response::abortInternalError($e);
         }
 
     }
@@ -61,56 +61,73 @@ class AuthController extends Controller
      *
      * @param Request $request The HTTP request object containing the user's email and password.
      * @throws \Exception If an error occurs during authentication or token creation.
-     * @return \Illuminate\Http\JsonResponse The JSON response containing the authentication token or an error message.
+     * @return \App\Contracts\Response The JSON response containing the authentication token or an error message.
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
         try {
-            $credentials = $request->validate([
-                'email' => 'required|string|email',
-                'password' => 'required|string',
-            ]);
+            $credentials = $request->validated();
 
             if (Auth::attempt($credentials)) {
                 $user = $request->user();
                 $token = $user->createToken('authToken')->plainTextToken;
 
-                return response()->json(['token' => $token]);
+                return (Response::json([
+                    'access_token' => $token,
+                    'token_type' => 'Bearer',
+                ]));
+
             }
 
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return Response::abortUnauthorized();
+
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return Response::abortInternalError($e);
         }
     }
 
-    public function me(Request $request)
+    /**
+     * A description of the entire PHP function.
+     *
+     * @param Request $request description
+     * @throws \Exception description of exception
+     * @return Response
+     */
+    public function me(HttpRequest $request)
     {
         try {
             $user = $request->user();
             $role = $user->role;
+
             if ($role == 1) {
                 $user = Student::where('email', $user->email)->first();
+
+                var_dump($user);
+                exit;
+                return Response::json(new StudentResource($user));
             } elseif ($role == 2) {
+
                 $user = Lecturer::where('email', $user->email)->first();
+                return Response::json(new LecturerResource($user));
             }
 
-            return response()->json([
-                'name' => $user->name,
-                'email' => $user->email,
-                'created_at' => $user->created_at,
-            ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return Response::abortInternalError($e);
 
         }
     }
 
-    public function logout(Request $request)
+    /**
+     * Logs out the user by deleting the current access token.
+     *
+     * @param Request $request The HTTP request.
+     * @return Response The HTTP response.
+     */
+    public function logout(HttpRequest $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out']);
+        return Response::noContent();
     }
 
 }

@@ -1,65 +1,79 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
+use App\Contracts\Response;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CourseTaskRequest;
+use App\Http\Resources\CourseTaskResource;
 use App\Models\CourseTask;
-use Illuminate\Http\Request;
 
 class CourseTaskController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the courseTasks.
+     *
+     * @return \App\Contracts\Response
      */
     public function index()
     {
-        //
+        return Response::json(CourseTaskResource::collection(CourseTask::all()));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created courseTask in storage.
+     *
+     * @param  \App\Http\Requests\CourseTaskRequest  $request
+     * @return \App\Contracts\Response
      */
-    public function create()
+    public function store(CourseTaskRequest $request)
     {
-        //
+        $data = $request->validated();
+
+        return Response::okCreated(new CourseTaskResource(CourseTask::create($data)));
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
+     * Display the specified courseTask.
+     *
+     * @param  \App\Models\CourseTask  $courseTask
+     * @return \App\Contracts\Response
      */
     public function show(CourseTask $courseTask)
     {
-        //
+        $courseTask = CourseTask::find($courseTask);
+
+        if ($courseTask) {
+            return Response::json(new CourseTaskResource($courseTask));
+        }
+
+        return Response::abortNotFound();
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified courseTask in storage.
+     *
+     * @param  \App\Http\Requests\CourseTaskRequest  $request
+     * @param  \App\Models\CourseTask  $courseTask
+     * @return \App\Contracts\Response
      */
-    public function edit(CourseTask $courseTask)
+    public function update(CourseTaskRequest $request, CourseTask $courseTask)
     {
-        //
+        $data = $request->validated();
+
+        $courseTask->update($data);
+        return Response::okUpdated(new CourseTaskResource($courseTask));
     }
 
     /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, CourseTask $courseTask)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
+     * Remove the specified courseTask from storage.
+     *
+     * @param  \App\Models\CourseTask  $courseTask
+     * @return \App\Contracts\Response
      */
     public function destroy(CourseTask $courseTask)
     {
-        //
+        $courseTask->delete();
+        return Response::noContent();
     }
 }

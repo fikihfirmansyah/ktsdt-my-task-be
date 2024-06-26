@@ -1,65 +1,82 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API;
 
+use App\Contracts\Response;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CourseRequest;
+use App\Http\Resources\CourseResource;
 use App\Models\Course;
-use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the courses.
+     *
+     * @return \App\Contracts\Response
      */
     public function index()
     {
-        //
+        return Response::json(CourseResource::collection(Course::all()));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store a newly created course in storage.
+     *
+     * @param  \App\Http\Requests\CourseRequest  $request
+     * @return \App\Contracts\Response
      */
-    public function create()
+    public function store(CourseRequest $request)
     {
-        //
+        $data = $request->validated();
+
+        return Response::okCreated(new CourseResource(Course::create($data)));
+
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified course.
+     *
+     * @param  \App\Models\Course  $course
+     * @return \App\Contracts\Response
      */
-    public function store(Request $request)
+    public function show($course)
     {
-        //
+        $course = Course::find($course);
+
+        if ($course) {
+            return Response::json(new CourseResource($course));
+        }
+
+        return Response::abortNotFound();
     }
 
     /**
-     * Display the specified resource.
+     * Update the specified course in storage.
+     *
+     * @param  \App\Http\Requests\CourseRequest  $request
+     * @param  \App\Models\Course  $course
+     * @return \App\Contracts\Response
      */
-    public function show(Course $course)
+    public function update(CourseRequest $request, Course $course)
     {
-        //
+        $data = $request->validated();
+
+        $course->update($data);
+        return Response::okUpdated(new CourseResource($course));
+
     }
 
     /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Course $course)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Course $course)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
+     * Remove the specified course from storage.
+     *
+     * @param  \App\Models\Course  $course
+     * @return \App\Contracts\Response
      */
     public function destroy(Course $course)
     {
-        //
+        $course->delete();
+        return Response::noContent();
+
     }
 }

@@ -7,12 +7,13 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class CourseTaskAssignee
- * 
+ *
  * @property string $id
  * @property string $course_task_id
  * @property string $student_id
@@ -21,7 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string|null $deleted_at
- * 
+ *
  * @property CourseTask $course_task
  * @property Student $student
  *
@@ -29,7 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class CourseTaskAssignee extends Model
 {
-	use SoftDeletes;
+	use SoftDeletes, HasUuids;
 	protected $table = 'course_task_assignees';
 	public $incrementing = false;
 
